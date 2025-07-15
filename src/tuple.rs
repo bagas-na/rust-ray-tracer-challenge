@@ -48,12 +48,7 @@ impl ops::Neg for Tuple {
     /// Does not check for validity of resulting Tuple
     /// (whether it is a point of a vector)
     fn neg(self) -> Self::Output {
-        Tuple {
-            x: -self.x,
-            y: -self.y,
-            z: -self.z,
-            w: -self.w,
-        }
+        self * (-1.0)
     }
 }
 
