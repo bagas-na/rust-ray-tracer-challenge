@@ -6,14 +6,13 @@ pub struct Color {
 }
 
 use std::{cmp, ops};
+use crate::EPSILON;
 
 impl cmp::PartialEq for Color {
     fn eq(&self, rhs: &Self) -> bool {
-        let eps = 0.00001;
-
-        (self.red - rhs.red).abs() < eps
-            && (self.green - rhs.green).abs() < eps
-            && (self.blue - rhs.blue).abs() < eps
+        (self.red - rhs.red).abs() < EPSILON
+            && (self.green - rhs.green).abs() < EPSILON
+            && (self.blue - rhs.blue).abs() < EPSILON
     }
 }
 

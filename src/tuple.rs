@@ -7,15 +7,14 @@ pub struct Tuple {
 }
 
 use std::{cmp, ops};
+use crate::EPSILON;
 
 impl cmp::PartialEq for Tuple {
     fn eq(&self, rhs: &Self) -> bool {
-        let eps = 0.00001;
-
-        (self.x - rhs.x).abs() < eps
-            && (self.y - rhs.y).abs() < eps
-            && (self.z - rhs.z).abs() < eps
-            && (self.w - rhs.w).abs() < eps
+        (self.x - rhs.x).abs() < EPSILON
+            && (self.y - rhs.y).abs() < EPSILON
+            && (self.z - rhs.z).abs() < EPSILON
+            && (self.w - rhs.w).abs() < EPSILON
     }
 }
 
