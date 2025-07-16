@@ -1,3 +1,5 @@
+use std::{cmp, ops};
+use crate::EPSILON;
 #[derive(Debug, Clone)]
 pub struct Tuple {
     x: f64,
@@ -6,8 +8,6 @@ pub struct Tuple {
     w: f64,
 }
 
-use std::{cmp, ops};
-use crate::EPSILON;
 
 impl cmp::PartialEq for Tuple {
     fn eq(&self, rhs: &Self) -> bool {

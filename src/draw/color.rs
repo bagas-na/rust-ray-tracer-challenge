@@ -1,8 +1,8 @@
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy)]
 pub struct Color {
-    red: f64,
-    green: f64,
-    blue: f64,
+    pub red: f64,
+    pub green: f64,
+    pub blue: f64,
 }
 
 use std::{cmp, ops};
@@ -123,10 +123,10 @@ mod tests {
         assert_eq!(color * 2.0, Color::new(0.4, 0.6, 0.8));
     }
 
-	#[test]
+    #[test]
     fn mult_two_colors() {
         let color_a = Color::new(1.0, 0.2, 0.4);
         let color_b = Color::new(0.9, 1.0, 0.1);
-		assert_eq!(color_a * color_b, Color::new(0.9, 0.2, 0.04));
+        assert_eq!(color_a * color_b, Color::new(0.9, 0.2, 0.04));
     }
 }
