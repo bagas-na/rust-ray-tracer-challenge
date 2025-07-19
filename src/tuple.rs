@@ -61,6 +61,11 @@ impl Tuple {
         self.w == 0.0
     }
 
+    /// Get elements of Tuple
+    pub fn get(&self) -> (f64, f64, f64, f64) {
+        (self.x, self.y, self.z, self.w)
+    }
+
     /// Addition between two tuples
     fn add(t1: &Tuple, t2: &Tuple) -> Tuple {
         Tuple {
