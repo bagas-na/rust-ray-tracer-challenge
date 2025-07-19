@@ -1,5 +1,5 @@
-use std::{cmp, ops};
 use crate::EPSILON;
+use std::{cmp, fmt, ops};
 #[derive(Debug, Clone)]
 pub struct Tuple {
     x: f64,
@@ -7,7 +7,6 @@ pub struct Tuple {
     z: f64,
     w: f64,
 }
-
 
 impl cmp::PartialEq for Tuple {
     fn eq(&self, rhs: &Self) -> bool {
@@ -18,63 +17,15 @@ impl cmp::PartialEq for Tuple {
     }
 }
 
-impl ops::Add for Tuple {
-    type Output = Tuple;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        match self.w + rhs.w {
-            0.0 => Tuple::new_vector(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z),
-            1.0 => Tuple::new_point(self.x + rhs.x, self.y + rhs.y, self.z + rhs.z),
-            _ => panic!("Resulting Tuple is neither a point nor a vector"),
-        }
-    }
-}
-
-impl ops::Sub for Tuple {
-    type Output = Tuple;
-
-    fn sub(self, rhs: Self) -> Self::Output {
-        match self.w - rhs.w {
-            0.0 => Tuple::new_vector(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z),
-            1.0 => Tuple::new_point(self.x - rhs.x, self.y - rhs.y, self.z - rhs.z),
-            _ => panic!("Resulting Tuple is neither a point nor a vector"),
-        }
-    }
-}
-
 impl ops::Neg for Tuple {
     type Output = Tuple;
-    /// Does not check for validity of resulting Tuple
-    /// (whether it is a point of a vector)
+
     fn neg(self) -> Self::Output {
-        self * (-1.0)
-    }
-}
-
-impl ops::Mul<f64> for Tuple {
-    type Output = Tuple;
-    /// Does not check for validity of resulting Tuple
-    /// (whether it is a point of a vector)
-    fn mul(self, rhs: f64) -> Self::Output {
         Tuple {
-            x: self.x * rhs,
-            y: self.y * rhs,
-            z: self.z * rhs,
-            w: self.w * rhs,
-        }
-    }
-}
-
-impl ops::Div<f64> for Tuple {
-    type Output = Tuple;
-    /// Does not check for validity of resulting Tuple
-    /// (whether it is a point of a vector)
-    fn div(self, rhs: f64) -> Self::Output {
-        Tuple {
-            x: self.x / rhs,
-            y: self.y / rhs,
-            z: self.z / rhs,
-            w: self.w / rhs,
+            x: -self.x,
+            y: -self.y,
+            z: -self.z,
+            w: -self.w,
         }
     }
 }
@@ -85,9 +36,6 @@ impl Tuple {
     /// ## Panics
     /// Will panic if w is neither 0 nor 1.
     fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
-        // if w != 0.0 && w != 1.0 {
-        //     panic!("Tuple is neither a point nor a vector.")
-        // }
         Tuple { x, y, z, w }
     }
 
@@ -113,6 +61,46 @@ impl Tuple {
         self.w == 0.0
     }
 
+    /// Addition between two tuples
+    fn add(t1: &Tuple, t2: &Tuple) -> Tuple {
+        Tuple {
+            x: t1.x + t2.x,
+            y: t1.y + t2.y,
+            z: t1.z + t2.z,
+            w: t1.w + t2.w,
+        }
+    }
+
+    /// Subtraction of a tuple from another tuple
+    fn sub(t1: &Tuple, t2: &Tuple) -> Tuple {
+        Tuple {
+            x: t1.x - t2.x,
+            y: t1.y - t2.y,
+            z: t1.z - t2.z,
+            w: t1.w - t2.w,
+        }
+    }
+
+    /// Scalar multiplication of a tuple
+    fn mul_scal(&self, scal: f64) -> Tuple {
+        Tuple {
+            x: self.x * scal,
+            y: self.y * scal,
+            z: self.z * scal,
+            w: self.w * scal,
+        }
+    }
+
+    /// Scalar division of a tuple
+    fn div_scal(&self, scal: f64) -> Tuple {
+        Tuple {
+            x: self.x / scal,
+            y: self.y / scal,
+            z: self.z / scal,
+            w: self.w / scal,
+        }
+    }
+
     /// Returns the magnitude of a tuple
     pub fn magnitude(&self) -> f64 {
         let sos = [self.x, self.y, self.z, self.w]
@@ -131,20 +119,106 @@ impl Tuple {
     }
 
     /// Dot product between self and Tuple t
-    pub fn dot(&self, t: &Tuple) -> f64 {
-        self.x * t.x + self.y * t.y + self.z * t.z + self.w * t.w
+    pub fn dot(tuple_a: &Tuple, tuple_b: &Tuple) -> f64 {
+        tuple_a.x * tuple_b.x
+            + tuple_a.y * tuple_b.y
+            + tuple_a.z * tuple_b.z
+            + tuple_a.w * tuple_b.w
     }
 
     /// Cross product between self (vector) and another vector
-    pub fn cross(&self, vector: &Tuple) -> Tuple {
-        assert!(self.is_vector(), "Self is not a vector.");
-        assert!(vector.is_vector(), "\"Vector\" is not a vector.");
+    pub fn cross(vector_a: &Tuple, vector_b: &Tuple) -> Tuple {
+        assert!(vector_a.is_vector(), "{} is not a vector.", vector_a);
+        assert!(vector_b.is_vector(), "{} is not a vector.", vector_b);
 
         Tuple::new_vector(
-            self.y * vector.z - self.z * vector.y,
-            self.z * vector.x - self.x * vector.z,
-            self.x * vector.y - self.y * vector.x,
+            vector_a.y * vector_b.z - vector_a.z * vector_b.y,
+            vector_a.z * vector_b.x - vector_a.x * vector_b.z,
+            vector_a.x * vector_b.y - vector_a.y * vector_b.x,
         )
+    }
+}
+
+impl ops::Add for Tuple {
+    type Output = Tuple;
+    fn add(self, rhs: Self) -> Self::Output {
+        Tuple::add(&self, &rhs)
+    }
+}
+
+impl ops::Add<&Tuple> for Tuple {
+    type Output = Tuple;
+    fn add(self, rhs: &Tuple) -> Self::Output {
+        Tuple::add(&self, rhs)
+    }
+}
+
+impl<'a, 'b> ops::Add<&'b Tuple> for &'a Tuple {
+    type Output = Tuple;
+    fn add(self, rhs: &'b Tuple) -> Self::Output {
+        Tuple::add(self, rhs)
+    }
+}
+
+impl ops::Sub for Tuple {
+    type Output = Tuple;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        Tuple::sub(&self, &rhs)
+    }
+}
+
+impl ops::Sub<&Tuple> for Tuple {
+    type Output = Tuple;
+
+    fn sub(self, rhs: &Tuple) -> Self::Output {
+        Tuple::sub(&self, rhs)
+    }
+}
+
+impl<'a, 'b> ops::Sub<&'b Tuple> for &'a Tuple {
+    type Output = Tuple;
+
+    fn sub(self, rhs: &'b Tuple) -> Self::Output {
+        Tuple::sub(self, rhs)
+    }
+}
+
+impl ops::Mul<f64> for Tuple {
+    type Output = Tuple;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Tuple::mul_scal(&self, rhs)
+    }
+}
+
+impl ops::Mul<f64> for &Tuple {
+    type Output = Tuple;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        Tuple::mul_scal(self, rhs)
+    }
+}
+
+impl ops::Div<f64> for Tuple {
+    type Output = Tuple;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Tuple::div_scal(&self, rhs)
+    }
+}
+
+impl ops::Div<f64> for &Tuple {
+    type Output = Tuple;
+
+    fn div(self, rhs: f64) -> Self::Output {
+        Tuple::div_scal(self, rhs)
+    }
+}
+
+impl fmt::Display for Tuple {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{{{}, {}, {}, {}}}", self.x, self.y, self.z, self.w)
     }
 }
 
@@ -284,7 +358,7 @@ mod tests {
         let vector_a = Tuple::new_vector(1.0, 2.0, 3.0);
         let vector_b = Tuple::new_vector(2.0, 3.0, 4.0);
 
-        assert_eq!(vector_a.dot(&vector_b), 20.0);
+        assert_eq!(Tuple::dot(&vector_a, &vector_b), 20.0);
     }
 
     #[test]
@@ -293,9 +367,12 @@ mod tests {
         let vector_b = Tuple::new_vector(2.0, 3.0, 4.0);
 
         assert_eq!(
-            vector_a.cross(&vector_b),
+            Tuple::cross(&vector_a, &vector_b),
             Tuple::new_vector(-1.0, 2.0, -1.0)
         );
-        assert_eq!(vector_b.cross(&vector_a), Tuple::new_vector(1.0, -2.0, 1.0));
+        assert_eq!(
+            Tuple::cross(&vector_b, &vector_a),
+            Tuple::new_vector(1.0, -2.0, 1.0)
+        );
     }
 }

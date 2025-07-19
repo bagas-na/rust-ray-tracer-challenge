@@ -1,43 +1,18 @@
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Color {
     pub red: f64,
     pub green: f64,
     pub blue: f64,
 }
 
-use std::{cmp, ops};
 use crate::EPSILON;
+use std::{cmp, ops};
 
 impl cmp::PartialEq for Color {
     fn eq(&self, rhs: &Self) -> bool {
         (self.red - rhs.red).abs() < EPSILON
             && (self.green - rhs.green).abs() < EPSILON
             && (self.blue - rhs.blue).abs() < EPSILON
-    }
-}
-
-impl ops::Add for Color {
-    type Output = Color;
-
-    fn add(self, rhs: Self) -> Self::Output {
-        Color {
-            red: self.red + rhs.red,
-            green: self.green + rhs.green,
-            blue: self.blue + rhs.blue,
-        }
-    }
-}
-
-/// The Hadamard product (or Shur product) between two colors
-impl ops::Mul for Color {
-    type Output = Color;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        Color {
-            red: self.red * rhs.red,
-            green: self.green * rhs.green,
-            blue: self.blue * rhs.blue,
-        }
     }
 }
 
@@ -69,7 +44,92 @@ impl ops::Neg for Color {
     type Output = Color;
 
     fn neg(self) -> Self::Output {
-        self * (-1.0)
+        Color {
+            red: -self.red,
+            green: -self.green,
+            blue: -self.blue,
+        }
+    }
+}
+
+impl Color {
+    pub fn new(red: f64, green: f64, blue: f64) -> Color {
+        Color { red, green, blue }
+    }
+
+    /// Component wise addition between two colors
+    fn add(c1: &Color, c2: &Color) -> Color {
+        Color {
+            red: c1.red + c2.red,
+            green: c1.green + c2.green,
+            blue: c1.blue + c2.blue,
+        }
+    }
+
+    /// Component wise subtraction between two colors
+    fn sub(c1: &Color, c2: &Color) -> Color {
+        Color {
+            red: c1.red + c2.red,
+            green: c1.green + c2.green,
+            blue: c1.blue + c2.blue,
+        }
+    }
+
+    /// The Hadamard product (or Schur product) between two colors
+    fn hadamard_product(c1: &Color, c2: &Color) -> Color {
+        Color {
+            red: c1.red * c2.red,
+            green: c1.green * c2.green,
+            blue: c1.blue * c2.blue,
+        }
+    }
+}
+
+impl ops::Add for Color {
+    type Output = Color;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        Color::add(&self, &rhs)
+    }
+}
+
+impl ops::Add<&Color> for Color {
+    type Output = Color;
+
+    fn add(self, rhs: &Color) -> Self::Output {
+        Color::add(&self, rhs)
+    }
+}
+
+impl<'a, 'b> ops::Add<&'b Color> for &'a Color {
+    type Output = Color;
+
+    fn add(self, rhs: &'b Color) -> Self::Output {
+        Color::add(self, rhs)
+    }
+}
+
+impl ops::Mul for Color {
+    type Output = Color;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        Color::hadamard_product(&self, &rhs)
+    }
+}
+
+impl ops::Mul<&Color> for Color {
+    type Output = Color;
+
+    fn mul(self, rhs: &Color) -> Self::Output {
+        Color::hadamard_product(&self, rhs)
+    }
+}
+
+impl<'a, 'b> ops::Mul<&'b Color> for &'a Color {
+    type Output = Color;
+
+    fn mul(self, rhs: &'b Color) -> Self::Output {
+        Color::hadamard_product(self, rhs)
     }
 }
 
@@ -77,17 +137,23 @@ impl ops::Sub for Color {
     type Output = Color;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        self + (-rhs)
+        Color::sub(&self, &rhs)
     }
 }
 
-impl Color {
-    pub fn new(r: f64, g: f64, b: f64) -> Color {
-        Color {
-            red: r,
-            green: g,
-            blue: b,
-        }
+impl ops::Sub<&Color> for Color {
+    type Output = Color;
+
+    fn sub(self, rhs: &Color) -> Self::Output {
+        Color::sub(&self, rhs)
+    }
+}
+
+impl<'a, 'b> ops::Sub<&'b Color> for &'a Color {
+    type Output = Color;
+
+    fn sub(self, rhs: &'b Color) -> Self::Output {
+        Color::sub(self, rhs)
     }
 }
 
@@ -107,13 +173,22 @@ mod tests {
     fn addition() {
         let color_a = Color::new(0.9, 0.6, 0.75);
         let color_b = Color::new(0.7, 0.1, 0.25);
-        assert_eq!(color_a + color_b, Color::new(1.6, 0.7, 1.0));
+        let color_result = Color::new(1.6, 0.7, 1.0);
+        assert_eq!(&color_a + &color_b, color_result);
+        assert_eq!(color_a + &color_b, color_result);
+
+        let color_a = Color::new(0.9, 0.6, 0.75);
+        assert_eq!(color_a + color_b, color_result);
     }
 
     #[test]
     fn subtraction() {
         let color_a = Color::new(0.9, 0.6, 0.75);
         let color_b = Color::new(0.7, 0.1, 0.25);
+        assert_eq!(&color_a - &color_b, Color::new(0.2, 0.5, 0.5));
+        assert_eq!(color_a - &color_b, Color::new(0.2, 0.5, 0.5));
+
+        let color_a = Color::new(0.9, 0.6, 0.75);
         assert_eq!(color_a - color_b, Color::new(0.2, 0.5, 0.5));
     }
 

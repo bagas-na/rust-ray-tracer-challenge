@@ -1,30 +1,31 @@
 use crate::draw::Color;
 use std::{convert, fmt};
 
+#[derive(Debug, Clone, Copy)]
 struct ColorU8 {
-    r: u8,
-    g: u8,
-    b: u8,
+    red: u8,
+    green: u8,
+    blue: u8,
 }
 
 impl ColorU8 {
-    fn new(r: u8, g: u8, b: u8) -> ColorU8 {
-        ColorU8 { r, g, b }
+    fn new(red: u8, green: u8, blue: u8) -> ColorU8 {
+        ColorU8 { red, green, blue }
     }
 }
 
 impl fmt::Display for ColorU8 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {} {}", self.r, self.g, self.b)
+        write!(f, "{} {} {}", self.red, self.green, self.blue)
     }
 }
 
 impl convert::From<&Color> for ColorU8 {
     fn from(value: &Color) -> Self {
         ColorU8 {
-            r: (value.red.clamp(0.0, 1.0) * 255.0) as u8,
-            g: (value.green.clamp(0.0, 1.0) * 255.0) as u8,
-            b: (value.blue.clamp(0.0, 1.0) * 255.0) as u8,
+            red: (value.red.clamp(0.0, 1.0) * 255.0) as u8,
+            green: (value.green.clamp(0.0, 1.0) * 255.0) as u8,
+            blue: (value.blue.clamp(0.0, 1.0) * 255.0) as u8,
         }
     }
 }
@@ -67,7 +68,7 @@ impl Canvas {
     }
 
     /// Writes a pixel with a given Color at a given location (0-indexed)
-    pub fn write_pixel_at(&mut self, x: usize, y: usize, color: Color) -> Result<(), CanvasError> {
+    pub fn write_pixel_at(&mut self, x: usize, y: usize, color: &Color) -> Result<(), CanvasError> {
         if x >= self.width || y >= self.height {
             return Err(CanvasError::OutOfBounds {
                 x,
@@ -77,7 +78,7 @@ impl Canvas {
             });
         }
 
-        self.pixels[y * self.width + x] = color;
+        self.pixels[y * self.width + x] = color.to_owned();
 
         Ok(())
     }
@@ -94,6 +95,8 @@ impl Canvas {
                 })
                 .collect::<Vec<_>>()
                 .join(" ");
+
+            let line_len = 
 
             ppm.push_str(&line);
             ppm.push('\n');
@@ -125,7 +128,7 @@ mod tests {
         let color_red = Color::new(1.0, 0.0, 0.0);
 
         canvas
-            .write_pixel_at(2, 3, color_red)
+            .write_pixel_at(2, 3, &color_red)
             .expect("Fail to assign color to canvas pixel");
 
         let pixel = canvas
