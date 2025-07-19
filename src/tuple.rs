@@ -1,5 +1,6 @@
 use crate::EPSILON;
 use std::{cmp, fmt, ops};
+
 #[derive(Debug, Clone)]
 pub struct Tuple {
     x: f64,
@@ -35,8 +36,13 @@ impl Tuple {
     /// represents an instance of a vector (w = 0) or a point (w = 1)
     /// ## Panics
     /// Will panic if w is neither 0 nor 1.
-    fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
-        Tuple { x, y, z, w }
+    pub fn new(x: f64, y: f64, z: f64, w: f64) -> Self {
+        Self { x, y, z, w }
+    }
+
+    /// Creates a new Tuple with zeroed elements
+    pub fn zero() -> Self {
+        Tuple::new(0.0, 0.0, 0.0, 0.0)
     }
 
     /// Creates a new instance of Tuple{x, y, z, w} that represents a point.
@@ -49,6 +55,20 @@ impl Tuple {
     /// Automatically assigns w = 0.0
     pub fn new_vector(x: f64, y: f64, z: f64) -> Self {
         Tuple::new(x, y, z, 0.0)
+    }
+
+    /// Creates a new instance of Tuple{x, y, z, w} from a function 
+    /// where x = f(0), y = f(1), z = f(2), w = f(3)
+    pub fn from_fn<F>(f: F) -> Self
+    where
+        F: Fn(usize) -> f64,
+    {
+        Self {
+            x: f(0),
+            y: f(1),
+            z: f(2),
+            w: f(3),
+        }
     }
 
     /// Checks whether the Tuple represents a point.
@@ -67,8 +87,8 @@ impl Tuple {
     }
 
     /// Addition between two tuples
-    fn add(t1: &Tuple, t2: &Tuple) -> Tuple {
-        Tuple {
+    fn add(t1: &Self, t2: &Self) -> Self {
+        Self {
             x: t1.x + t2.x,
             y: t1.y + t2.y,
             z: t1.z + t2.z,
@@ -77,8 +97,8 @@ impl Tuple {
     }
 
     /// Subtraction of a tuple from another tuple
-    fn sub(t1: &Tuple, t2: &Tuple) -> Tuple {
-        Tuple {
+    fn sub(t1: &Self, t2: &Self) -> Self {
+        Self {
             x: t1.x - t2.x,
             y: t1.y - t2.y,
             z: t1.z - t2.z,
@@ -87,8 +107,8 @@ impl Tuple {
     }
 
     /// Scalar multiplication of a tuple
-    fn mul_scal(&self, scal: f64) -> Tuple {
-        Tuple {
+    fn mul_scal(&self, scal: f64) -> Self {
+        Self {
             x: self.x * scal,
             y: self.y * scal,
             z: self.z * scal,
@@ -97,8 +117,8 @@ impl Tuple {
     }
 
     /// Scalar division of a tuple
-    fn div_scal(&self, scal: f64) -> Tuple {
-        Tuple {
+    fn div_scal(&self, scal: f64) -> Self {
+        Self {
             x: self.x / scal,
             y: self.y / scal,
             z: self.z / scal,
@@ -133,8 +153,8 @@ impl Tuple {
 
     /// Cross product between self (vector) and another vector
     pub fn cross(vector_a: &Tuple, vector_b: &Tuple) -> Tuple {
-        assert!(vector_a.is_vector(), "{} is not a vector.", vector_a);
-        assert!(vector_b.is_vector(), "{} is not a vector.", vector_b);
+        assert!(vector_a.is_vector(), "{vector_a} is not a vector.");
+        assert!(vector_b.is_vector(), "{vector_b} is not a vector.");
 
         Tuple::new_vector(
             vector_a.y * vector_b.z - vector_a.z * vector_b.y,

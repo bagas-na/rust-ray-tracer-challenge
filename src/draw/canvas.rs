@@ -48,8 +48,8 @@ pub enum CanvasError {
 }
 
 impl Canvas {
-    pub fn new(width: usize, height: usize) -> Canvas {
-        Canvas {
+    pub fn new(width: usize, height: usize) -> Self {
+        Self {
             width,
             height,
             pixels: vec![Color::new(0.0, 0.0, 0.0); width * height],

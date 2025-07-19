@@ -17,10 +17,9 @@ impl cmp::PartialEq for Color {
 }
 
 impl ops::Mul<f64> for Color {
-    type Output = Color;
-
+    type Output = Self;
     fn mul(self, rhs: f64) -> Self::Output {
-        Color {
+        Self {
             red: self.red * rhs,
             green: self.green * rhs,
             blue: self.blue * rhs,
@@ -29,10 +28,9 @@ impl ops::Mul<f64> for Color {
 }
 
 impl ops::Div<f64> for Color {
-    type Output = Color;
-
+    type Output = Self;
     fn div(self, rhs: f64) -> Self::Output {
-        Color {
+        Self {
             red: self.red / rhs,
             green: self.green / rhs,
             blue: self.blue / rhs,
@@ -41,10 +39,10 @@ impl ops::Div<f64> for Color {
 }
 
 impl ops::Neg for Color {
-    type Output = Color;
+    type Output = Self;
 
     fn neg(self) -> Self::Output {
-        Color {
+        Self {
             red: -self.red,
             green: -self.green,
             blue: -self.blue,
@@ -53,13 +51,13 @@ impl ops::Neg for Color {
 }
 
 impl Color {
-    pub fn new(red: f64, green: f64, blue: f64) -> Color {
-        Color { red, green, blue }
+    pub fn new(red: f64, green: f64, blue: f64) -> Self {
+        Self { red, green, blue }
     }
 
     /// Component wise addition between two colors
-    fn add(c1: &Color, c2: &Color) -> Color {
-        Color {
+    fn add(c1: &Self, c2: &Self) -> Self {
+        Self {
             red: c1.red + c2.red,
             green: c1.green + c2.green,
             blue: c1.blue + c2.blue,
@@ -67,8 +65,8 @@ impl Color {
     }
 
     /// Component wise subtraction between two colors
-    fn sub(c1: &Color, c2: &Color) -> Color {
-        Color {
+    fn sub(c1: &Self, c2: &Self) -> Self {
+        Self {
             red: c1.red - c2.red,
             green: c1.green - c2.green,
             blue: c1.blue - c2.blue,
@@ -76,8 +74,8 @@ impl Color {
     }
 
     /// The Hadamard product (or Schur product) between two colors
-    fn hadamard_product(c1: &Color, c2: &Color) -> Color {
-        Color {
+    pub fn hadamard_product(c1: &Self, c2: &Self) -> Self {
+        Self {
             red: c1.red * c2.red,
             green: c1.green * c2.green,
             blue: c1.blue * c2.blue,
@@ -86,18 +84,18 @@ impl Color {
 }
 
 impl ops::Add for Color {
-    type Output = Color;
+    type Output = Self;
 
     fn add(self, rhs: Self) -> Self::Output {
-        Color::add(&self, &rhs)
+        Self::add(&self, &rhs)
     }
 }
 
 impl ops::Add<&Color> for Color {
-    type Output = Color;
+    type Output = Self;
 
-    fn add(self, rhs: &Color) -> Self::Output {
-        Color::add(&self, rhs)
+    fn add(self, rhs: &Self) -> Self::Output {
+        Self::add(&self, rhs)
     }
 }
 
@@ -110,18 +108,18 @@ impl<'a, 'b> ops::Add<&'b Color> for &'a Color {
 }
 
 impl ops::Mul for Color {
-    type Output = Color;
+    type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        Color::hadamard_product(&self, &rhs)
+        Self::hadamard_product(&self, &rhs)
     }
 }
 
 impl ops::Mul<&Color> for Color {
-    type Output = Color;
+    type Output = Self;
 
-    fn mul(self, rhs: &Color) -> Self::Output {
-        Color::hadamard_product(&self, rhs)
+    fn mul(self, rhs: &Self) -> Self::Output {
+        Self::hadamard_product(&self, rhs)
     }
 }
 
@@ -134,18 +132,18 @@ impl<'a, 'b> ops::Mul<&'b Color> for &'a Color {
 }
 
 impl ops::Sub for Color {
-    type Output = Color;
+    type Output = Self;
 
     fn sub(self, rhs: Self) -> Self::Output {
-        Color::sub(&self, &rhs)
+        Self::sub(&self, &rhs)
     }
 }
 
 impl ops::Sub<&Color> for Color {
-    type Output = Color;
+    type Output = Self;
 
-    fn sub(self, rhs: &Color) -> Self::Output {
-        Color::sub(&self, rhs)
+    fn sub(self, rhs: &Self) -> Self::Output {
+        Self::sub(&self, rhs)
     }
 }
 
