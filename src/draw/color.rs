@@ -69,9 +69,9 @@ impl Color {
     /// Component wise subtraction between two colors
     fn sub(c1: &Color, c2: &Color) -> Color {
         Color {
-            red: c1.red + c2.red,
-            green: c1.green + c2.green,
-            blue: c1.blue + c2.blue,
+            red: c1.red - c2.red,
+            green: c1.green - c2.green,
+            blue: c1.blue - c2.blue,
         }
     }
 
