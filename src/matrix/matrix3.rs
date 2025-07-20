@@ -1,5 +1,7 @@
 use std::{cmp, fmt, ops};
 
+use crate::EPSILON;
+
 #[derive(Debug)]
 pub struct Matrix3 {
     data: [f64; 9], // row major
@@ -19,19 +21,11 @@ impl fmt::Display for Matrix3 {
                 "| {:>10.4} | {:>10.4} | {:>10.4}|\n",
                 "| {:>10.4} | {:>10.4} | {:>10.4}|",
             ),
-            data[0],
-            data[1],
-            data[2],
-            data[3],
-            data[4],
-            data[5],
-            data[6],
-            data[7],
-            data[8],
+            data[0], data[1], data[2], data[3], data[4], data[5], data[6], data[7], data[8],
         )
     }
 }
-    
+
 impl Matrix3 {
     /// Creates a 4x4 zero Matrix
     /// identical to Matrix4::new()
@@ -43,6 +37,28 @@ impl Matrix3 {
     /// identical to Matrix4::zero()
     pub fn new() -> Self {
         Self { data: [0.0; 9] }
+    }
+
+    /// Create a 3×3 matrix from a flat array of 9 elements.
+    /// The elements are arranged in row-major order.
+    /// Matrix = | arr[0] arr[1] arr[2] |
+    ///          | arr[3] arr[4] arr[5] |
+    ///          | arr[6] arr[7] arr[8] |
+    pub fn from_array(arr: [f64; 9]) -> Self {
+        Self { data: arr }
+    }
+
+    /// Create a 3×3 matrix from a flat array of 9 elements.
+    /// The elements are arranged in column-major order.
+    /// Matrix = | arr[0] arr[3] arr[6] |
+    ///          | arr[1] arr[4] arr[7] |
+    ///          | arr[2] arr[5] arr[8] |
+    pub fn from_array_by_col(arr: [f64; 9]) -> Self {
+        Self::from_array([
+            arr[0], arr[3], arr[6], // first row
+            arr[1], arr[4], arr[7], // second row
+            arr[2], arr[5], arr[8], // third row
+        ])
     }
 
     pub fn get(&self, row: usize, col: usize) -> Option<f64> {
@@ -60,6 +76,12 @@ impl Matrix3 {
         let index = row * 3 + col;
         self.data[index] = val;
         Ok(())
+    }
+
+    pub fn identity() -> Self {
+        let indices = [0, 4, 8];
+        let data = core::array::from_fn(|i| if indices.contains(&i) { 1.0 } else { 0.0 });
+        Self { data }
     }
 
     fn add(matrix_a: &Self, matrix_b: &Self) -> Self {
@@ -89,14 +111,14 @@ impl Matrix3 {
 
 impl Default for Matrix3 {
     fn default() -> Self {
-        Self::new()
+        Self::zero()
     }
 }
 
 impl cmp::PartialEq for Matrix3 {
     fn eq(&self, other: &Self) -> bool {
         for i in 0..9 {
-            if self.data[i] != other.data[i] {
+            if (self.data[i] - other.data[i]).abs() > EPSILON {
                 return false;
             }
         }
@@ -116,9 +138,9 @@ impl ops::Add<&Self> for Matrix3 {
         Self::add(&self, rhs)
     }
 }
-impl<'a, 'b> ops::Add<&'b Self> for &'a Matrix3 {
+impl<'a, 'b> ops::Add<&'b Matrix3> for &'a Matrix3 {
     type Output = Matrix3;
-    fn add(self, rhs: &'b Self) -> Self::Output {
+    fn add(self, rhs: &'b Matrix3) -> Self::Output {
         Matrix3::add(self, rhs)
     }
 }
@@ -135,9 +157,9 @@ impl ops::Sub<&Self> for Matrix3 {
         Self::sub(&self, rhs)
     }
 }
-impl<'a, 'b> ops::Sub<&'b Self> for &'a Matrix3 {
+impl<'a, 'b> ops::Sub<&'b Matrix3> for &'a Matrix3 {
     type Output = Matrix3;
-    fn sub(self, rhs: &'b Self) -> Self::Output {
+    fn sub(self, rhs: &'b Matrix3) -> Self::Output {
         Matrix3::sub(self, rhs)
     }
 }
@@ -154,13 +176,24 @@ impl ops::Mul<&Self> for Matrix3 {
         Self::mult_mat(&self, rhs)
     }
 }
-impl<'a, 'b> ops::Mul<&'b Self> for &'a Matrix3 {
+impl<'a, 'b> ops::Mul<&'b Matrix3> for &'a Matrix3 {
     type Output = Matrix3;
-    fn mul(self, rhs: &'b Self) -> Self::Output {
+    fn mul(self, rhs: &'b Matrix3) -> Self::Output {
         Matrix3::mult_mat(self, rhs)
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    #[test]
+    fn creation_and_inspection() {
+        let m = Matrix3::from_array([-3.0, 5.0, 0.0, 1.0, -2.0, -7.0, 0.0, 1.0, 1.0]);
+
+        assert_eq!(m.get(0, 0), Some(-3.0));
+        assert_eq!(m.get(1, 0), Some(1.0));
+        assert_eq!(m.get(1, 2), Some(-7.0));
+        assert_eq!(m.get(2, 2), Some(1.0));
+    }
 }

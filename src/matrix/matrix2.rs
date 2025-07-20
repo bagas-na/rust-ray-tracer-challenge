@@ -1,5 +1,7 @@
 use std::{cmp, fmt, ops};
 
+use crate::EPSILON;
+
 #[derive(Debug)]
 pub struct Matrix2 {
     data: [f64; 4], // row major
@@ -33,6 +35,25 @@ impl Matrix2 {
         Self { data: [0.0; 4] }
     }
 
+    /// Create a 2×2 matrix from a flat array of 4 elements.
+    /// The elements are arranged in row-major order.
+    /// Matrix = | arr[0] arr[1] |
+    ///          | arr[2] arr[3] |
+    pub fn from_array(arr: [f64; 4]) -> Self {
+        Self { data: arr }
+    }
+
+    /// Create a 2×2 matrix from a flat array of 4 elements.
+    /// The elements are arranged in column-major order.
+    /// Matrix = | arr[0] arr[2] |
+    ///          | arr[1] arr[3] |
+    pub fn from_array_by_col(arr: [f64; 4]) -> Self {
+        Self::from_array([
+            arr[0], arr[2], // first row
+            arr[1], arr[3], // second row
+        ])
+    }
+
     pub fn get(&self, row: usize, col: usize) -> Option<f64> {
         if row >= 2 || col >= 2 {
             return None;
@@ -48,6 +69,12 @@ impl Matrix2 {
         let index = row * 2 + col;
         self.data[index] = val;
         Ok(())
+    }
+
+    pub fn identity() -> Self {
+        let indices = [0, 3];
+        let data = core::array::from_fn(|i| if indices.contains(&i) { 1.0 } else { 0.0 });
+        Self { data }
     }
 
     fn add(matrix_a: &Self, matrix_b: &Self) -> Self {
@@ -77,14 +104,14 @@ impl Matrix2 {
 
 impl Default for Matrix2 {
     fn default() -> Self {
-        Self::new()
+        Self::zero()
     }
 }
 
 impl cmp::PartialEq for Matrix2 {
     fn eq(&self, other: &Self) -> bool {
         for i in 0..9 {
-            if self.data[i] != other.data[i] {
+            if (self.data[i] - other.data[i]).abs() > EPSILON {
                 return false;
             }
         }
@@ -104,9 +131,9 @@ impl ops::Add<&Self> for Matrix2 {
         Self::add(&self, rhs)
     }
 }
-impl<'a, 'b> ops::Add<&'b Self> for &'a Matrix2 {
+impl<'a, 'b> ops::Add<&'b Matrix2> for &'a Matrix2 {
     type Output = Matrix2;
-    fn add(self, rhs: &'b Self) -> Self::Output {
+    fn add(self, rhs: &'b Matrix2) -> Self::Output {
         Matrix2::add(self, rhs)
     }
 }
@@ -123,9 +150,9 @@ impl ops::Sub<&Self> for Matrix2 {
         Self::sub(&self, rhs)
     }
 }
-impl<'a, 'b> ops::Sub<&'b Self> for &'a Matrix2 {
+impl<'a, 'b> ops::Sub<&'b Matrix2> for &'a Matrix2 {
     type Output = Matrix2;
-    fn sub(self, rhs: &'b Self) -> Self::Output {
+    fn sub(self, rhs: &'b Matrix2) -> Self::Output {
         Matrix2::sub(self, rhs)
     }
 }
@@ -142,12 +169,24 @@ impl ops::Mul<&Self> for Matrix2 {
         Self::mult_mat(&self, rhs)
     }
 }
-impl<'a, 'b> ops::Mul<&'b Self> for &'a Matrix2 {
+impl<'a, 'b> ops::Mul<&'b Matrix2> for &'a Matrix2 {
     type Output = Matrix2;
-    fn mul(self, rhs: &'b Self) -> Self::Output {
+    fn mul(self, rhs: &'b Matrix2) -> Self::Output {
         Matrix2::mult_mat(self, rhs)
     }
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+    use super::*;
+
+    #[test]
+    fn creation_and_inspection() {
+        let m = Matrix2::from_array([-3.0, 5.0, 1.0, -2.0]);
+
+        assert_eq!(m.get(0, 0), Some(-3.0));
+        assert_eq!(m.get(0, 1), Some(5.0));
+        assert_eq!(m.get(1, 0), Some(1.0));
+        assert_eq!(m.get(1, 1), Some(-2.0));
+    }
+}
