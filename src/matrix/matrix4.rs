@@ -1,4 +1,4 @@
-use crate::{EPSILON, tuple::Tuple};
+use crate::{EPSILON, matrix::Matrix3, tuple::Tuple};
 use std::{cmp, fmt, ops};
 
 #[derive(Debug)]
@@ -63,7 +63,7 @@ impl Matrix4 {
     /// Create a matrix using 4 columnes of Tuples.
     /// Given tuples t1, t2, t3, and t4, with each elements defined as
     /// x, y, z, w (t1 -> t1.x, t1.y, t1.z, t1.w)
-    /// ```
+    /// ```text
     /// Matrix = | t1.x | t2.x | t3.x | t4.x |
     ///          | t1.y | t2.y | t3.y | t4.y |
     ///          | t1.z | t2.z | t3.z | t4.z |
@@ -85,7 +85,7 @@ impl Matrix4 {
     /// Create a matrix using 4 rows of Tuples.
     /// Given tuples t1, t2, t3, and t4, with each elements defined as
     /// x, y, z, w (e.g. t1 -> t1.x, t1.y, t1.z, t1.w)
-    /// ```
+    /// ```text
     /// Matrix = | t1.x | t1.y | t1.z | t1.w |
     ///          | t2.x | t2.y | t2.z | t2.w |
     ///          | t3.x | t3.y | t3.z | t3.w |
@@ -106,7 +106,7 @@ impl Matrix4 {
 
     /// Create a matrix using a flat static array of 16 elements
     /// Arranged row-by-row
-    /// ```
+    /// ```text
     /// Matrix = | arr[0]  | arr[1]  | arr[2]  | arr[3]  |
     ///          | arr[4]  | arr[5]  | arr[6]  | arr[7]  |
     ///          | arr[8]  | arr[9]  | arr[10] | arr[11] |
@@ -118,7 +118,7 @@ impl Matrix4 {
 
     /// Create a matrix using a flat static array of 16 elements
     /// Arranged column-by-column
-    /// ```
+    /// ```text
     /// Matrix = | arr[0] | arr[4] | arr[8]  | arr[12] |
     ///          | arr[1] | arr[5] | arr[9]  | arr[13] |
     ///          | arr[2] | arr[6] | arr[10] | arr[14] |
@@ -192,6 +192,62 @@ impl Matrix4 {
             }
         }
         Self { data: transposed }
+    }
+
+    /// Extracts a submatrix (3x3 matrix) of a 4x4 matrix given row and column
+    /// to be removed
+    pub fn submatrix(&self, row: usize, col: usize) -> Matrix3 {
+        let mut submatrix_data = [0.0; 9];
+        let mut index: usize = 0;
+
+        for (i, val) in self.data.iter().enumerate() {
+            if (i / 4 == row) || (i % 4 == col) {
+                continue;
+            } else {
+                submatrix_data[index] = *val;
+                index += 1;
+            }
+        }
+        Matrix3::from_array(submatrix_data)
+    }
+
+    /// Computes the minor of an element at given row and column,
+    /// Which is the determinant of
+    /// ```text
+    /// matrix4.submatrix(row: usize, column: usize)
+    /// ```
+    pub fn minor(&self, row: usize, col: usize) -> f64 {
+        let submatrix = self.submatrix(row, col);
+        submatrix.det()
+    }
+
+    /// Computes the cofactor of an element at given row (i) and column (i),
+    /// ```text
+    /// Cofactor = (-1)^(i + j) matrix4.minor(row: usize, column: usize)
+    /// ```
+    pub fn cofactor(&self, row: usize, col: usize) -> f64 {
+        let minor = self.minor(row, col);
+        if let 0 = (row + col) % 2 {
+            minor
+        } else {
+            -minor
+        }
+    }
+
+    /// Calculate the determinant of the matrix. Given:
+    /// ```text
+    /// M = ⎡e00  e01  e02  e03⎤
+    ///     ⎢e10  e11  e12  e13⎥
+    ///     ⎢e20  e21  e22  e23⎥
+    ///     ⎣e30  e31  e32  e33⎦
+    /// det(M) = e00 * M.cofactor(0,0) + e01 * M.cofactor(0, 1) + e02 * M.cofactor(0, 2) + e03 * M.cofactor(0, 3)
+    /// ```
+    pub fn det(&self) -> f64 {
+        let data = self.data;
+        data[0] * self.cofactor(0, 0)
+            + data[1] * self.cofactor(0, 1)
+            + data[2] * self.cofactor(0, 2)
+            + data[3] * self.cofactor(0, 3)
     }
 }
 
@@ -394,12 +450,31 @@ mod tests {
     #[test]
     fn transpose() {
         let matrix_a = Matrix4::from_array([
-            0.0, 9.0, 3.0, 0.0, 9.0, 8.0, 0.0, 8.0, 1.0, 8.0, 5.0, 3.0, 0.0, 0.0, 5.0, 8.0
+            0.0, 9.0, 3.0, 0.0, 9.0, 8.0, 0.0, 8.0, 1.0, 8.0, 5.0, 3.0, 0.0, 0.0, 5.0, 8.0,
         ]);
         let result = Matrix4::from_array([
-            0.0, 9.0, 1.0, 0.0, 9.0, 8.0, 8.0, 0.0, 3.0, 0.0, 5.0, 5.0, 0.0, 8.0, 3.0, 8.0
+            0.0, 9.0, 1.0, 0.0, 9.0, 8.0, 8.0, 0.0, 3.0, 0.0, 5.0, 5.0, 0.0, 8.0, 3.0, 8.0,
         ]);
 
         assert_eq!(matrix_a.transpose(), result);
+    }
+
+    #[test]
+    fn submatrix() {
+        let matrix_a = Matrix4::from_array([
+            -6.0, 1.0, 1.0, 6.0, -8.0, 5.0, 8.0, 6.0, -1.0, 0.0, 8.0, 2.0, -7.0, 1.0, -1.0, 1.0,
+        ]);
+        let result = Matrix3::from_array([-6.0, 1.0, 6.0, -8.0, 8.0, 6.0, -7.0, -1.0, 1.0]);
+        assert_eq!(matrix_a.submatrix(2, 1), result);
+    }
+
+    #[test]
+    fn determinant() {
+        let matrix_a = Matrix4::from_array([-2., -8., 3., 5., -3., 1., 7., 3., 1., 2., -9., 6., -6., 7., 7., -9.,]);
+        assert_eq!(matrix_a.cofactor(0, 0), 690.);
+        assert_eq!(matrix_a.cofactor(0, 1), 447.);
+        assert_eq!(matrix_a.cofactor(0, 2), 210.);
+        assert_eq!(matrix_a.cofactor(0, 3), 51.);
+        assert_eq!(matrix_a.det(), -4071.);
     }
 }

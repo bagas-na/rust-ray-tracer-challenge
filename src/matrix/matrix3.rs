@@ -1,6 +1,6 @@
 use std::{cmp, fmt, ops};
 
-use crate::EPSILON;
+use crate::{EPSILON, matrix::Matrix2};
 
 #[derive(Debug)]
 pub struct Matrix3 {
@@ -107,6 +107,72 @@ impl Matrix3 {
 
         Self { data }
     }
+
+    pub fn transpose(&self) -> Self {
+        let data = self.data;
+        let mut transposed = [0.0; 9];
+        for i in 0..3 {
+            for j in 0..3 {
+                transposed[i * 3 + j] = data[j * 3 + i];
+            }
+        }
+        Self { data: transposed }
+    }
+
+    /// Extracts a submatrix (2x2 matrix) of a 3x3 matrix given row and column
+    /// to be removed
+    pub fn submatrix(&self, row: usize, col: usize) -> Matrix2 {
+        let mut submatrix_data = [0.0; 4];
+        let mut index: usize = 0;
+
+        for (i, val) in self.data.iter().enumerate() {
+            if (i / 3 == row) || (i % 3 == col) {
+                continue;
+            } else {
+                submatrix_data[index] = *val;
+                index += 1;
+            }
+        }
+        Matrix2::from_array(submatrix_data)
+    }
+
+    /// Computes the minor of an element at given row and column,
+    /// Which is the determinant of
+    /// ```text
+    /// matrix3.submatrix(row: usize, column: usize)
+    /// ```
+    pub fn minor(&self, row: usize, col: usize) -> f64 {
+        let submatrix = self.submatrix(row, col);
+        submatrix.det()
+    }
+
+    /// Computes the cofactor of an element at given row (i) and column (i),
+    /// ```text
+    /// Cofactor = (-1)^(i + j) matrix3.minor(row: usize, column: usize)
+    /// ```
+    pub fn cofactor(&self, row: usize, col: usize) -> f64 {
+        let minor = self.minor(row, col);
+        if let 0 = (row + col) % 2 {
+            minor
+        } else {
+            -minor
+        }
+    }
+
+    /// Calculate the determinant of the matrix. Given:
+    /// ```text
+    /// M = ⎡a  b  c⎤
+    ///     ⎢d  e  f⎥
+    ///     ⎣g  h  i⎦
+    ///
+    /// det(M) = a * M.cofactor(0,0) + b * M.cofactor(0, 1) + c * M.cofactor(0, 2)
+    /// ```
+    pub fn det(&self) -> f64 {
+        let data = self.data;
+        data[0] * self.cofactor(0, 0)
+            + data[1] * self.cofactor(0, 1)
+            + data[2] * self.cofactor(0, 2)
+    }
 }
 
 impl Default for Matrix3 {
@@ -195,5 +261,76 @@ mod tests {
         assert_eq!(m.get(1, 0), Some(1.0));
         assert_eq!(m.get(1, 2), Some(-7.0));
         assert_eq!(m.get(2, 2), Some(1.0));
+    }
+
+    #[test]
+    fn equality_two_matrices() {
+        let a = Matrix3::from_array([1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0]);
+        let b = Matrix3::from_array([
+            1.000005, 2.000005, 3.000005, 4.000005, 5.000005, 6.000005, 7.000005, 8.000005,
+            9.000005,
+        ]);
+        let c = Matrix3::from_array([
+            1.000005, 2.000005, 3.000005, 4.000005, 5.000005, 6.000005, 7.000005, 8.000005, 9.00005,
+        ]);
+
+        assert_eq!(a, b);
+        assert_ne!(a, c);
+    }
+
+    #[test]
+    fn multiplication() {
+        let matrix_a = Matrix3::from_array([5.0, 3.0, 7.0, -3.0, -4.0, -5.0, -6.0, -8.0, 9.0]);
+        let matrix_b = Matrix3::from_array([4.0, 4.0, -5.0, -7.0, 1.0, 9.0, 9.0, 1.0, -4.0]);
+        let result = Matrix3::from_array([62., 30., -26., -29., -21., -1., 113., -23., -78.]);
+
+        assert_eq!(matrix_a * matrix_b, result);
+    }
+
+    #[test]
+    fn multiplicative_identity() {
+        let identity = Matrix3::identity();
+        let matrix_a = Matrix3::from_array([4.0, 4.0, -5.0, -7.0, 1.0, 9.0, 9.0, 1.0, -4.0]);
+        assert_eq!(&identity * &matrix_a, matrix_a);
+    }
+
+    #[test]
+    fn transpose() {
+        let matrix_a = Matrix3::from_array([4.0, 4.0, -5.0, -7.0, 1.0, 9.0, 9.0, 1.0, -4.0]);
+        let result = Matrix3::from_array([4.0, -7.0, 9.0, 4.0, 1.0, 1.0, -5.0, 9.0, -4.0]);
+        assert_eq!(matrix_a.transpose(), result);
+    }
+
+    #[test]
+    fn submatrix() {
+        let matrix_a = Matrix3::from_array([1.0, 5.0, 0.0, -3.0, 2.0, 7.0, 0.0, 6.0, -3.0]);
+        let result = Matrix2::from_array([-3.0, 2.0, 0.0, 6.0]);
+        assert_eq!(matrix_a.submatrix(0, 2), result);
+    }
+
+    #[test]
+    fn minor() {
+        let matrix_a = Matrix3::from_array([3.0, 5.0, 0.0, 2.0, -1.0, -7.0, 6.0, -1.0, 5.0]);
+        let submatrix_b = matrix_a.submatrix(1, 0);
+        assert_eq!(submatrix_b.det(), 25.0);
+        assert_eq!(matrix_a.minor(1, 0), 25.0);
+    }
+
+    #[test]
+    fn cofactor() {
+        let matrix_a = Matrix3::from_array([3.0, 5.0, 0.0, 2.0, -1.0, -7.0, 6.0, -1.0, 5.0]);
+        assert_eq!(matrix_a.minor(0, 0), -12.0);
+        assert_eq!(matrix_a.cofactor(0, 0), -12.0);
+        assert_eq!(matrix_a.minor(1, 0), 25.0);
+        assert_eq!(matrix_a.cofactor(1, 0), -25.0);
+    }
+
+    #[test]
+    fn determinant() {
+        let matrix_a = Matrix3::from_array([1.0, 2.0, 6.0, -5.0, 8.0, -4.0, 2.0, 6.0, 4.0,]);
+        assert_eq!(matrix_a.cofactor(0, 0), 56.);
+        assert_eq!(matrix_a.cofactor(0, 1), 12.);
+        assert_eq!(matrix_a.cofactor(0, 2), -46.);
+        assert_eq!(matrix_a.det(), -196.);
     }
 }

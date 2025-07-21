@@ -100,6 +100,21 @@ impl Matrix2 {
 
         Self { data }
     }
+
+    pub fn transpose(&self) -> Self {
+        let data = self.data;
+        Self { data: [data[0], data[2], data[1], data[3]]}
+    }
+
+    /// Calculate the determinant of the matrix
+    /// ```text
+    /// determinant ⎡a  b⎤ = ad - bc
+    ///             ⎣c  d⎦ 
+    /// ```
+    pub fn det(&self) -> f64 {
+        let data = self.data;
+        data[0] * data[3] - data[1] * data[2]
+    }
 }
 
 impl Default for Matrix2 {
@@ -110,7 +125,7 @@ impl Default for Matrix2 {
 
 impl cmp::PartialEq for Matrix2 {
     fn eq(&self, other: &Self) -> bool {
-        for i in 0..9 {
+        for i in 0..4 {
             if (self.data[i] - other.data[i]).abs() > EPSILON {
                 return false;
             }
@@ -188,5 +203,44 @@ mod tests {
         assert_eq!(m.get(0, 1), Some(5.0));
         assert_eq!(m.get(1, 0), Some(1.0));
         assert_eq!(m.get(1, 1), Some(-2.0));
+    }
+
+    #[test]
+    fn equality_two_matrices() {
+        let a = Matrix2::from_array([1.0, 2.0, 3.0, 4.0]);
+        let b = Matrix2::from_array([1.000005, 2.000005, 3.000005, 4.000005]);
+        let c = Matrix2::from_array([1.000005, 2.000005, 3.000005, 4.00005]);
+
+        assert_eq!(a, b);
+        assert_ne!(a, c);
+    }
+
+    #[test]
+    fn multiplication() {
+        let matrix_a = Matrix2::from_array([1.0, 2.0, 3.0, 4.0]);
+        let matrix_b = Matrix2::from_array([-2.0, 1.0, 2.0, 3.0]);
+        let result = Matrix2::from_array([2.0, 7.0, 2.0, 15.0]);
+
+        assert_eq!(matrix_a * matrix_b, result);
+    }
+
+    #[test]
+    fn multiplicative_identity() {
+        let identity = Matrix2::identity();
+        let matrix_a = Matrix2::from_array([1.0, 3.0, 8.0, 2.0]);
+        assert_eq!(&identity * &matrix_a, matrix_a);
+    }
+
+    #[test]
+    fn transpose() {
+        let matrix_a = Matrix2::from_array([1.0, 5.0, -3.0, 2.0]);
+        let result = Matrix2::from_array([1.0, -3.0, 5.0, 2.0]);
+        assert_eq!(matrix_a.transpose(), result);
+    }
+
+    #[test]
+    fn determinant() {
+        let matrix_a =  Matrix2::from_array([1.0, 5.0, -3.0, 2.0]);
+        assert_eq!(matrix_a.det(), 17.0);
     }
 }
