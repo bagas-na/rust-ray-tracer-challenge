@@ -131,6 +131,7 @@ impl Matrix4 {
         ])
     }
 
+    /// Get element at given row and column. 0-indexed
     pub fn get(&self, row: usize, col: usize) -> Option<f64> {
         if row >= 4 || col >= 4 {
             return None;
@@ -139,6 +140,7 @@ impl Matrix4 {
         Some(self.data[index])
     }
 
+    /// Set element at given row and column. 0-indexed
     pub fn set(&mut self, row: usize, col: usize, val: f64) -> Result<(), Matrix4Error> {
         if row >= 4 || col >= 4 {
             return Err(Matrix4Error::OutOfBounds);

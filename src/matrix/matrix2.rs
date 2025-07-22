@@ -54,6 +54,7 @@ impl Matrix2 {
         ])
     }
 
+    /// Get element at given row and column. 0-indexed
     pub fn get(&self, row: usize, col: usize) -> Option<f64> {
         if row >= 2 || col >= 2 {
             return None;
@@ -62,6 +63,7 @@ impl Matrix2 {
         Some(self.data[index])
     }
 
+    /// Set element at given row and column. 0-indexed
     pub fn set(&mut self, row: usize, col: usize, val: f64) -> Result<(), Matrix2Error> {
         if row >= 2 || col >= 2 {
             return Err(Matrix2Error::OutOfBounds);

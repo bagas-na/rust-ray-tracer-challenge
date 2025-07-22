@@ -61,6 +61,7 @@ impl Matrix3 {
         ])
     }
 
+    /// Get element at given row and column. 0-indexed
     pub fn get(&self, row: usize, col: usize) -> Option<f64> {
         if row >= 3 || col >= 3 {
             return None;
@@ -69,6 +70,7 @@ impl Matrix3 {
         Some(self.data[index])
     }
 
+    /// Set element at given row and column. 0-indexed
     pub fn set(&mut self, row: usize, col: usize, val: f64) -> Result<(), Matrix3Error> {
         if row >= 3 || col >= 3 {
             return Err(Matrix3Error::OutOfBounds);
