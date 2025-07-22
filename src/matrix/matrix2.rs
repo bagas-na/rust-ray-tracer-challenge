@@ -101,19 +101,46 @@ impl Matrix2 {
         Self { data }
     }
 
+    fn mult_scal(matrix_a: &Self, scal: f64) -> Self {
+        let data = core::array::from_fn(|i| matrix_a.data[i] * scal);
+        Self { data }
+    }
+
+    fn div_scal(matrix_a: &Self, scal: f64) -> Self {
+        let data = core::array::from_fn(|i| matrix_a.data[i] / scal);
+        Self { data }
+    }
+
     pub fn transpose(&self) -> Self {
         let data = self.data;
-        Self { data: [data[0], data[2], data[1], data[3]]}
+        Self {
+            data: [data[0], data[2], data[1], data[3]],
+        }
     }
 
     /// Calculate the determinant of the matrix
     /// ```text
     /// determinant ⎡a  b⎤ = ad - bc
-    ///             ⎣c  d⎦ 
+    ///             ⎣c  d⎦
     /// ```
     pub fn det(&self) -> f64 {
         let data = self.data;
         data[0] * data[3] - data[1] * data[2]
+    }
+
+    pub fn invertible(&self) -> bool {
+        self.det().abs() > EPSILON
+    }
+
+    pub fn inverse(&self) -> Option<Self> {
+        if let false = self.invertible() {
+            None
+        } else {
+            let det = self.det();
+            let data = self.data;
+            let adjoint = Matrix2::from_array([data[3], -data[1], -data[2], data[0]]);
+            Some(adjoint / det)
+        }
     }
 }
 
@@ -191,6 +218,32 @@ impl<'a, 'b> ops::Mul<&'b Matrix2> for &'a Matrix2 {
     }
 }
 
+impl ops::Mul<f64> for Matrix2 {
+    type Output = Self;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Matrix2::mult_scal(&self, rhs)
+    }
+}
+impl ops::Mul<f64> for &Matrix2 {
+    type Output = Matrix2;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Matrix2::mult_scal(self, rhs)
+    }
+}
+
+impl ops::Div<f64> for Matrix2 {
+    type Output = Self;
+    fn div(self, rhs: f64) -> Self::Output {
+        Matrix2::div_scal(&self, rhs)
+    }
+}
+impl ops::Div<f64> for &Matrix2 {
+    type Output = Matrix2;
+    fn div(self, rhs: f64) -> Self::Output {
+        Matrix2::div_scal(self, rhs)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -240,7 +293,7 @@ mod tests {
 
     #[test]
     fn determinant() {
-        let matrix_a =  Matrix2::from_array([1.0, 5.0, -3.0, 2.0]);
+        let matrix_a = Matrix2::from_array([1.0, 5.0, -3.0, 2.0]);
         assert_eq!(matrix_a.det(), 17.0);
     }
 }

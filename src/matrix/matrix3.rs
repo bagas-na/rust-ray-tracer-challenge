@@ -108,6 +108,16 @@ impl Matrix3 {
         Self { data }
     }
 
+    fn mult_scal(matrix_a: &Self, scal: f64) -> Self {
+        let data = core::array::from_fn(|i| matrix_a.data[i] * scal);
+        Self { data }
+    }
+
+    fn div_scal(matrix_a: &Self, scal: f64) -> Self {
+        let data = core::array::from_fn(|i| matrix_a.data[i] / scal);
+        Self { data }
+    }
+
     pub fn transpose(&self) -> Self {
         let data = self.data;
         let mut transposed = [0.0; 9];
@@ -172,6 +182,23 @@ impl Matrix3 {
         data[0] * self.cofactor(0, 0)
             + data[1] * self.cofactor(0, 1)
             + data[2] * self.cofactor(0, 2)
+    }
+
+    pub fn invertible(&self) -> bool {
+        self.det().abs() > EPSILON
+    }
+
+    pub fn inverse(&self) -> Option<Self> {
+        if let false = self.invertible() {
+            None
+        } else {
+            let adjoint = Self::from_array(core::array::from_fn(|i| {
+                let row = i / 3;
+                let col = i % 3;
+                self.cofactor(col, row) // inline transpose
+            }));
+            Some(adjoint / self.det())
+        }
     }
 }
 
@@ -246,6 +273,32 @@ impl<'a, 'b> ops::Mul<&'b Matrix3> for &'a Matrix3 {
     type Output = Matrix3;
     fn mul(self, rhs: &'b Matrix3) -> Self::Output {
         Matrix3::mult_mat(self, rhs)
+    }
+}
+
+impl ops::Mul<f64> for Matrix3 {
+    type Output = Self;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Matrix3::mult_scal(&self, rhs)
+    }
+}
+impl ops::Mul<f64> for &Matrix3 {
+    type Output = Matrix3;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Matrix3::mult_scal(self, rhs)
+    }
+}
+
+impl ops::Div<f64> for Matrix3 {
+    type Output = Self;
+    fn div(self, rhs: f64) -> Self::Output {
+        Matrix3::div_scal(&self, rhs)
+    }
+}
+impl ops::Div<f64> for &Matrix3 {
+    type Output = Matrix3;
+    fn div(self, rhs: f64) -> Self::Output {
+        Matrix3::div_scal(self, rhs)
     }
 }
 
@@ -327,7 +380,7 @@ mod tests {
 
     #[test]
     fn determinant() {
-        let matrix_a = Matrix3::from_array([1.0, 2.0, 6.0, -5.0, 8.0, -4.0, 2.0, 6.0, 4.0,]);
+        let matrix_a = Matrix3::from_array([1.0, 2.0, 6.0, -5.0, 8.0, -4.0, 2.0, 6.0, 4.0]);
         assert_eq!(matrix_a.cofactor(0, 0), 56.);
         assert_eq!(matrix_a.cofactor(0, 1), 12.);
         assert_eq!(matrix_a.cofactor(0, 2), -46.);

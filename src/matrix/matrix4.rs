@@ -183,6 +183,16 @@ impl Matrix4 {
         )
     }
 
+    fn mult_scal(matrix_a: &Self, scal: f64) -> Self {
+        let data = core::array::from_fn(|i| matrix_a.data[i] * scal);
+        Self { data }
+    }
+
+    fn div_scal(matrix_a: &Self, scal: f64) -> Self {
+        let data = core::array::from_fn(|i| matrix_a.data[i] / scal);
+        Self { data }
+    }
+
     pub fn transpose(&self) -> Self {
         let mut transposed = [0.0; 16];
         let data = self.data;
@@ -248,6 +258,23 @@ impl Matrix4 {
             + data[1] * self.cofactor(0, 1)
             + data[2] * self.cofactor(0, 2)
             + data[3] * self.cofactor(0, 3)
+    }
+
+    pub fn invertible(&self) -> bool {
+        self.det().abs() > EPSILON
+    }
+
+    pub fn inverse(&self) -> Option<Self> {
+        if let false = self.invertible() {
+            None
+        } else {
+            let adjoint = Self::from_array(core::array::from_fn(|i| {
+                let row = i / 4;
+                let col = i % 4;
+                self.cofactor(col, row) // inline transpose
+            }));
+            Some(adjoint / self.det())
+        }
     }
 }
 
@@ -341,6 +368,32 @@ impl<'a, 'b> ops::Mul<&'b Tuple> for &'a Matrix4 {
     type Output = Tuple;
     fn mul(self, rhs: &'b Tuple) -> Self::Output {
         Matrix4::mult_vec(self, rhs)
+    }
+}
+
+impl ops::Mul<f64> for Matrix4 {
+    type Output = Self;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Matrix4::mult_scal(&self, rhs)
+    }
+}
+impl ops::Mul<f64> for &Matrix4 {
+    type Output = Matrix4;
+    fn mul(self, rhs: f64) -> Self::Output {
+        Matrix4::mult_scal(self, rhs)
+    }
+}
+
+impl ops::Div<f64> for Matrix4 {
+    type Output = Self;
+    fn div(self, rhs: f64) -> Self::Output {
+        Matrix4::div_scal(&self, rhs)
+    }
+}
+impl ops::Div<f64> for &Matrix4 {
+    type Output = Matrix4;
+    fn div(self, rhs: f64) -> Self::Output {
+        Matrix4::div_scal(self, rhs)
     }
 }
 
@@ -470,11 +523,48 @@ mod tests {
 
     #[test]
     fn determinant() {
-        let matrix_a = Matrix4::from_array([-2., -8., 3., 5., -3., 1., 7., 3., 1., 2., -9., 6., -6., 7., 7., -9.,]);
+        let matrix_a = Matrix4::from_array([
+            -2., -8., 3., 5., -3., 1., 7., 3., 1., 2., -9., 6., -6., 7., 7., -9.,
+        ]);
         assert_eq!(matrix_a.cofactor(0, 0), 690.);
         assert_eq!(matrix_a.cofactor(0, 1), 447.);
         assert_eq!(matrix_a.cofactor(0, 2), 210.);
         assert_eq!(matrix_a.cofactor(0, 3), 51.);
         assert_eq!(matrix_a.det(), -4071.);
+    }
+
+    #[test]
+    fn invertible() {
+        let matrix_a = Matrix4::from_array([
+            6.0, 4.0, 4.0, 4.0, 5.0, 5.0, 7.0, 6.0, 4.0, -9.0, 3.0, -7.0, 9.0, 1.0, 7.0, -6.0,
+        ]);
+        assert!(matrix_a.invertible());
+
+        let matrix_a = Matrix4::from_array([
+            -4.0, 2.0, -2.0, -3.0, 9.0, 6.0, 2.0, 6.0, 0.0, -5.0, 1.0, -5.0, 0., 0., 0., 0.,
+        ]);
+        assert!(!matrix_a.invertible());
+    }
+
+    #[test]
+    fn inverse() {
+        let matrix_a = Matrix4::from_array([
+            -5.0, 2.0, 6.0, -8.0, 1.0, -5.0, 1.0, 8.0, 7.0, 7.0, -6.0, -7.0, 1.0, -3.0, 7.0, 4.0,
+        ]);
+        let matrix_b = matrix_a.inverse().unwrap();
+        let det_a = matrix_a.det();
+
+        assert_eq!(&matrix_a * &matrix_b, Matrix4::identity());
+        assert_eq!(matrix_a.det(), 532.0);
+        assert_eq!(matrix_a.cofactor(2, 3), -160.0,);
+        assert_eq!(matrix_b.get(3, 2), Some(-160.0 / det_a));
+        assert_eq!(matrix_a.cofactor(3, 2), 105.0);
+        assert_eq!(matrix_b.get(2, 3), Some(105.0 / det_a));
+
+        let result = Matrix4::from_array([
+            0.21805, 0.45113, 0.24060, -0.04511, -0.80827, -1.45677, -0.44361, 0.52068, -0.07895,
+            -0.22368, -0.05263, 0.19737, -0.52256, -0.81391, -0.30075, 0.30639,
+        ]);
+        assert_eq!(matrix_b, result);
     }
 }
