@@ -1,7 +1,7 @@
-use crate::{EPSILON, matrix::Matrix3, tuple::Tuple};
+use crate::{EPSILON, matrix::Matrix3, transform, tuple::Tuple};
 use std::{cmp, fmt, ops};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Matrix4 {
     data: [f64; 16], // row major
 }
@@ -195,7 +195,8 @@ impl Matrix4 {
         Self { data }
     }
 
-    pub fn transpose(&self) -> Self {
+    /// Return a transposed matrix
+    pub fn transpose(self) -> Self {
         let mut transposed = [0.0; 16];
         let data = self.data;
         for row in 0..4 {
@@ -266,7 +267,8 @@ impl Matrix4 {
         self.det().abs() > EPSILON
     }
 
-    pub fn inverse(&self) -> Option<Self> {
+    /// Return the inverse of the matrix
+    pub fn inverse(self) -> Option<Self> {
         if let false = self.invertible() {
             None
         } else {
@@ -277,6 +279,42 @@ impl Matrix4 {
             }));
             Some(adjoint / self.det())
         }
+    }
+
+    /// Multiplies the current matrix by a translation matrix
+    pub fn translation(self, x: f64, y: f64, z: f64) -> Self {
+        transform::translation(x, y, z) * self
+    }
+
+    /// Multiplies the current matrix by a scaling matrix
+    pub fn scaling(self, x: f64, y: f64, z: f64) -> Self {
+        transform::scaling(x, y, z) * self
+    }
+
+    /// Multiplies the current matrix by a rotation matrix which rotates around
+    /// the x-axis clockwise (left hand rule), Given an angle in radian
+    pub fn rotation_x(self, rad: f64) -> Self {
+        transform::rotation_x(rad) * self
+    }
+
+    /// Multiplies the current matrix by a rotation matrix which rotates around
+    /// the y-axis clockwise (left hand rule), Given an angle in radian
+    pub fn rotation_y(self, rad: f64) -> Self {
+        transform::rotation_y(rad) * self
+    }
+
+    /// Multiplies the current matrix by a rotation matrix which rotates around
+    /// the z-axis clockwise (left hand rule), Given an angle in radian
+    pub fn rotation_z(self, rad: f64) -> Self {
+        transform::rotation_z(rad) * self
+    }
+
+    /// Multiplies the current matrix by a shear transformation matrix with
+    /// parameters x_y, x_z, y_x, y_z, z_x, z_y, where (for instance) x_y means
+    /// the (multiplicative) factor of how much a tuple (point or vector)
+    /// is moved in the x direction in proportion to the tuple's y component
+    pub fn shear(self, x_y: f64, x_z: f64, y_x: f64, y_z: f64, z_x: f64, z_y: f64) -> Self {
+        transform::shear(x_y, x_z, y_x, y_z, z_x, z_y) * self
     }
 }
 
@@ -553,7 +591,7 @@ mod tests {
         let matrix_a = Matrix4::from_array([
             -5.0, 2.0, 6.0, -8.0, 1.0, -5.0, 1.0, 8.0, 7.0, 7.0, -6.0, -7.0, 1.0, -3.0, 7.0, 4.0,
         ]);
-        let matrix_b = matrix_a.inverse().unwrap();
+        let matrix_b = (&matrix_a).clone().inverse().unwrap();
         let det_a = matrix_a.det();
 
         assert_eq!(&matrix_a * &matrix_b, Matrix4::identity());
@@ -568,5 +606,15 @@ mod tests {
             -0.22368, -0.05263, 0.19737, -0.52256, -0.81391, -0.30075, 0.30639,
         ]);
         assert_eq!(matrix_b, result);
+    }
+
+    #[test]
+    fn chaining_transformation() {
+        let point_p = Tuple::new_point(1., 0., 1.);
+        let matrix = Matrix4::identity()
+            .rotation_x(std::f64::consts::PI / 2.)
+            .scaling(5., 5., 5.)
+            .translation(10., 5., 7.);
+        assert_eq!(matrix * point_p, Tuple::new_point(15., 0., 7.));
     }
 }
