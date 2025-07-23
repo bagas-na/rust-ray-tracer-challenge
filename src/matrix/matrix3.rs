@@ -120,7 +120,7 @@ impl Matrix3 {
         Self { data }
     }
 
-    pub fn transpose(&self) -> Self {
+    pub fn transpose(self) -> Self {
         let data = self.data;
         let mut transposed = [0.0; 9];
         for i in 0..3 {
@@ -190,7 +190,7 @@ impl Matrix3 {
         self.det().abs() > EPSILON
     }
 
-    pub fn inverse(&self) -> Option<Self> {
+    pub fn inverse(self) -> Option<Self> {
         if let false = self.invertible() {
             None
         } else {

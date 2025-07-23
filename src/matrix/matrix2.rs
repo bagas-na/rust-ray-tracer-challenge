@@ -113,7 +113,7 @@ impl Matrix2 {
         Self { data }
     }
 
-    pub fn transpose(&self) -> Self {
+    pub fn transpose(self) -> Self {
         let data = self.data;
         Self {
             data: [data[0], data[2], data[1], data[3]],
@@ -134,7 +134,7 @@ impl Matrix2 {
         self.det().abs() > EPSILON
     }
 
-    pub fn inverse(&self) -> Option<Self> {
+    pub fn inverse(self) -> Option<Self> {
         if let false = self.invertible() {
             None
         } else {
