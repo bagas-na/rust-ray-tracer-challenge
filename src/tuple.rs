@@ -170,14 +170,18 @@ impl ops::Add for Tuple {
         Tuple::add(&self, &rhs)
     }
 }
-
 impl ops::Add<&Tuple> for Tuple {
     type Output = Tuple;
     fn add(self, rhs: &Tuple) -> Self::Output {
         Tuple::add(&self, rhs)
     }
 }
-
+impl ops::Add<Tuple> for &Tuple {
+    type Output = Tuple;
+    fn add(self, rhs: Tuple) -> Self::Output {
+        Tuple::add(self, &rhs)
+    }
+}
 impl<'a, 'b> ops::Add<&'b Tuple> for &'a Tuple {
     type Output = Tuple;
     fn add(self, rhs: &'b Tuple) -> Self::Output {
@@ -192,7 +196,6 @@ impl ops::Sub for Tuple {
         Tuple::sub(&self, &rhs)
     }
 }
-
 impl ops::Sub<&Tuple> for Tuple {
     type Output = Tuple;
 
@@ -200,7 +203,12 @@ impl ops::Sub<&Tuple> for Tuple {
         Tuple::sub(&self, rhs)
     }
 }
-
+impl ops::Sub<Tuple> for &Tuple {
+    type Output = Tuple;
+    fn sub(self, rhs: Tuple) -> Self::Output {
+        Tuple::sub(self, &rhs)
+    }
+}
 impl<'a, 'b> ops::Sub<&'b Tuple> for &'a Tuple {
     type Output = Tuple;
 

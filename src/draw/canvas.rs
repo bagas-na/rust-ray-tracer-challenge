@@ -103,7 +103,6 @@ impl Canvas {
             ppm.push_str(&line);
             ppm.push('\n');
         }
-        dbg!(&ppm);
         ppm
     }
 }
